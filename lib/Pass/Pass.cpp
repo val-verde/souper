@@ -25,6 +25,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
@@ -38,7 +39,9 @@
 #include "llvm/Transforms/Scalar/ADCE.h"
 #include "llvm/Transforms/Scalar/DCE.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Transforms/Utils/AssumeBundleBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "souper/KVStore/KVStore.h"
 #include "souper/SMTLIB2/Solver.h"
@@ -89,6 +92,61 @@ static const bool DynamicProfileAll = true;
 #else
 static const bool DynamicProfileAll = false;
 #endif
+
+static bool DCEInstruction(Instruction *I,
+                           SmallSetVector<Instruction *, 16> &WorkList,
+                           const TargetLibraryInfo *TLI) {
+  if (isInstructionTriviallyDead(I, TLI)) {
+    salvageDebugInfo(*I);
+    salvageKnowledge(I);
+
+    // Null out all of the instruction's operands to see if any operand becomes
+    // dead as we go.
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      Value *OpV = I->getOperand(i);
+      I->setOperand(i, nullptr);
+
+      if (!OpV->use_empty() || I == OpV)
+        continue;
+
+      // If the operand is an instruction that became dead as we nulled out the
+      // operand, and if it is 'trivially' dead, delete it in a future loop
+      // iteration.
+      if (Instruction *OpI = dyn_cast<Instruction>(OpV))
+        if (isInstructionTriviallyDead(OpI, TLI))
+          WorkList.insert(OpI);
+    }
+
+    I->eraseFromParent();
+    return true;
+  }
+  return false;
+}
+
+static bool
+eliminateDeadCode(Function &F, TargetLibraryInfo *TLI)
+{
+    bool MadeChange = false;
+    SmallSetVector<Instruction *, 16> WorkList;
+
+    for (inst_iterator FI = inst_begin(F), FE = inst_end(F); FI != FE;) {
+        Instruction *I = &*FI;
+
+        ++FI;
+
+	if (!WorkList.count(I)) {
+	    MadeChange |= DCEInstruction(I, WorkList, TLI);
+	}
+
+	while (!WorkList.empty()) {
+	    Instruction *I = WorkList.pop_back_val();
+
+	    MadeChange |= DCEInstruction(I, WorkList, TLI);
+	}
+    }
+
+    return MadeChange;
+}
 
 struct SouperPass : public ModulePass {
   static char ID;
