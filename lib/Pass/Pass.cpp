@@ -273,7 +273,9 @@ public:
     if (DebugLevel > 1) {
       errs() << "\n";
       errs() << "; entering Souper's runOnFunction() for " << FunctionName << "()\n\n";
+    #ifdef ENABLE_LLVM_DUMP
       F->getParent()->dump();
+    #endif
       errs() << "\n";
     }
 
@@ -410,7 +412,9 @@ public:
         if (DebugLevel > 2) {
           if (DebugLevel > 4) {
             errs() << "\nModule before replacement:\n";
+          #ifdef ENABLE_LLVM_DUMP
             F->getParent()->dump();
+         #endif
           } else {
             errs() << "\nFunction before replacement:\n";
             F->print(errs());
@@ -453,7 +457,9 @@ public:
       if (DebugLevel > 2) {
         if (DebugLevel > 4) {
           errs() << "\nModule after replacement:\n";
+        #ifdef ENABLE_LLVM_DUMP
           F->getParent()->dump();
+       #endif
         } else {
           errs() << "\nFunction after replacement:\n\n";
           F->print(errs());
