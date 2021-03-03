@@ -34,9 +34,9 @@ sub linkp() {
 }
 
 if ($0 =~ /clang$/) {
-    unshift @ARGV, "@LLVM_BINDIR@/clang";
+    unshift @ARGV, "clang";
 } elsif ($0 =~ /clang\+\+$/) {
-    unshift @ARGV, "@LLVM_BINDIR@/clang++";
+    unshift @ARGV, "clang++";
 } else {
     die "Didn't expect sclang to be invoked as '$0'";
 }
