@@ -141,46 +141,49 @@ find_library(HIREDIS_LIBRARY
   third_party/hiredis-install/lib
   NO_DEFAULT_PATH)
 
-find_library(ALIVE_IR ir PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
-if (ALIVE_IR)
-  message(STATUS "Alive2 IR")
-else()
-  message(SEND_ERROR "Alive2 libir.a not found")
-endif()
-
-find_library(ALIVE_SMT smt PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
-if (ALIVE_SMT)
-  message(STATUS "Alive2 SMT")
-else()
-  message(SEND_ERROR "Alive2 libsmt.a not found")
-endif()
-
-find_library(ALIVE_TOOLS tools PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
-if (ALIVE_TOOLS)
-  message(STATUS "Alive2 TOOLS")
-else()
-  message(SEND_ERROR "Alive2 libtools.a not found")
-endif()
-
-find_library(ALIVE_UTIL util PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
-if (ALIVE_UTIL)
-  message(STATUS "Alive2 UTIL")
-else()
-  message(SEND_ERROR "Alive2 libutil.a not found")
-endif()
-
-set(Z3 "${CMAKE_SOURCE_DIR}/third_party/z3-install/bin/z3")
-set(Z3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/z3-install/include")
-include_directories(${Z3_INCLUDE_DIR})
-
 find_library(Z3_LIBRARY z3 PATHS "${CMAKE_SOURCE_DIR}/third_party/z3-install/lib" NO_DEFAULT_PATH)
 if (Z3_LIBRARY)
   message(STATUS "Z3 shared lib: ${Z3_LIBRARY}")
 else()
   message(SEND_ERROR "Z3 shared lib not found")
 endif()
+set(Z3 "${CMAKE_SOURCE_DIR}/third_party/z3-install/bin/z3")
+set(Z3_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third_party/z3-install/include")
+include_directories(${Z3_INCLUDE_DIR})
 
-set(ALIVE_LIBRARY ${ALIVE_IR} ${ALIVE_SMT} ${ALIVE_TOOLS} ${ALIVE_UTIL} ${Z3_LIBRARY})
+find_library(ALIVE alive2)
+
+if(NOT ALIVE_LIBRARY)
+  find_library(ALIVE_IR ir PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
+  if (ALIVE_IR)
+    message(STATUS "Alive2 IR")
+  else()
+    message(SEND_ERROR "Alive2 libir.a not found")
+  endif()
+
+  find_library(ALIVE_SMT smt PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
+  if (ALIVE_SMT)
+    message(STATUS "Alive2 SMT")
+  else()
+    message(SEND_ERROR "Alive2 libsmt.a not found")
+  endif()
+
+  find_library(ALIVE_TOOLS tools PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
+  if (ALIVE_TOOLS)
+    message(STATUS "Alive2 TOOLS")
+  else()
+    message(SEND_ERROR "Alive2 libtools.a not found")
+  endif()
+
+  find_library(ALIVE_UTIL util PATHS "${ALIVE_BUILDDIR}" NO_DEFAULT_PATH)
+  if (ALIVE_UTIL)
+    message(STATUS "Alive2 UTIL")
+  else()
+    message(SEND_ERROR "Alive2 libutil.a not found")
+  endif()
+
+  set(ALIVE_LIBRARY ${ALIVE_IR} ${ALIVE_SMT} ${ALIVE_TOOLS} ${ALIVE_UTIL} ${Z3_LIBRARY})
+endif()
 
 set(SOUPER_CLANG_TOOL_FILES
   lib/ClangTool/Actions.cpp
